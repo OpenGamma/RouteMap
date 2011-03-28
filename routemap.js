@@ -146,7 +146,6 @@
             }, {page: [], rules: {scalars: [], keyvals: [], star: false}, last_optional: ''});
             delete compiled_route.last_optional; // this is just a temporary value and should not be exposed publicly
             compiled_route.page = compiled_route.page.join('/').replace(/\/$/, '') || '/'; // cast as string
-            console.log('compiled_route:', compiled_route);
             return compiled_route;
         };
     return pub.RouteMap = (routes) = { // parens around routes to satisfy JSDoc's caprice
