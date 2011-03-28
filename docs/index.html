@@ -196,7 +196,7 @@ ul.inheritsList
 				RouteMap
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/routemap.js.html">routemap.js</a>.
+					<br /><i>Defined in: </i> <a href="./symbols/src/routemap.js.html">routemap.js</a>.
 				
 			</p>
 
@@ -215,7 +215,7 @@ ul.inheritsList
 						<td class="attributes">&nbsp;</td>
 						<td class="nameDescription" >
 							<div class="fixedFont">
-								<b><a href="../symbols/RouteMap.html#constructor">RouteMap</a></b>
+								<b><a href="#constructor">RouteMap</a></b>
 							</div>
 							<div class="description"><p>RouteMap holds an internal table of route patterns and method names in addition to some
 adding/removing/utility methods and a handler for request routing.</div>
@@ -245,7 +245,7 @@ adding/removing/utility methods and a handler for request routing.</div>
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.add">add</a></b>(rule)
+								<div class="fixedFont">RouteMap.<b><a href="#.add">add</a></b>(rule)
 								</div>
 								<div class="description">adds a rule to the internal table of routes and methods</div>
 							</td>
@@ -254,7 +254,7 @@ adding/removing/utility methods and a handler for request routing.</div>
 						<tr>
 							<td class="attributes">&lt;private&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/RouteMap.html#compile">compile</a></b>(route)
+								<div class="fixedFont"><b><a href="#compile">compile</a></b>(route)
 								</div>
 								<div class="description">builds the internal representation of a rule based on the route definition</div>
 							</td>
@@ -263,7 +263,7 @@ adding/removing/utility methods and a handler for request routing.</div>
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.context">context</a></b>(scope)
+								<div class="fixedFont">RouteMap.<b><a href="#.context">context</a></b>(scope)
 								</div>
 								<div class="description">overrides the context where listener methods are sought, the default scope is <code>window</code>
 (in a browser setting)</div>
@@ -273,9 +273,9 @@ adding/removing/utility methods and a handler for request routing.</div>
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.current">current</a></b>()
+								<div class="fixedFont">RouteMap.<b><a href="#.current">current</a></b>()
 								</div>
-								<div class="description">returns the parsed (see <a href="../symbols/RouteMap.html#parse">#parse</a>) currently accessed route; after listeners have finished
+								<div class="description">returns the parsed (see <a href="#parse">#parse</a>) currently accessed route; after listeners have finished
 firing, <code>current</code> and <code>last</code> are the same</div>
 							</td>
 						</tr>
@@ -283,10 +283,10 @@ firing, <code>current</code> and <code>last</code> are the same</div>
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.get">get</a></b>()
+								<div class="fixedFont">RouteMap.<b><a href="#.get">get</a></b>()
 								</div>
 								<div class="description">URL grabber function, defaults to checking the URL fragment (<code>hash</code>); this function should be
-overwritten in a server-side environment; this method is called by <a href="../symbols/RouteMap.html#.handler">RouteMap.handler</a>; without
+overwritten in a server-side environment; this method is called by <a href="#.handler">RouteMap.handler</a>; without
 <code>window.location.hash</code> it will return <code>'/'</code></div>
 							</td>
 						</tr>
@@ -294,7 +294,7 @@ overwritten in a server-side environment; this method is called by <a href="../s
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.go">go</a></b>(hash)
+								<div class="fixedFont">RouteMap.<b><a href="#.go">go</a></b>(hash)
 								</div>
 								<div class="description">in a browser setting, it changes <code>window.location.hash</code>, in other settings, it should be
 overwritten to do something useful (if necessary); it will not throw an error if <code>window</code> does
@@ -305,21 +305,21 @@ not exist</div>
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.handler">handler</a></b>()
+								<div class="fixedFont">RouteMap.<b><a href="#.handler">handler</a></b>()
 								</div>
 								<div class="description">main handler function for routing, this should be bound to <code>hashchange</code> events in the browser, or
-(in conjunction with updating <a href="../symbols/RouteMap.html#.get">RouteMap.get</a>) used with the HTML5 <code>history</code> API, it detects
+(in conjunction with updating <a href="#.get">RouteMap.get</a>) used with the HTML5 <code>history</code> API, it detects
 all the matching route patterns, parses the URL parameters and fires their methods with the arguments from
-the parsed URL; the timing of <a href="../symbols/RouteMap.html#.current">RouteMap.current</a> and <a href="../symbols/RouteMap.html#.last">RouteMap.last</a> being set is as follows
+the parsed URL; the timing of <a href="#.current">RouteMap.current</a> and <a href="#.last">RouteMap.last</a> being set is as follows
 (pseudo-code):
 <blockquote><pre>
-path: get_route             // <a href="../symbols/RouteMap.html#.get">RouteMap.get</a>
-parsed: parse path          // <a href="../symbols/RouteMap.html#parse">#parse</a>
-current: longest parsed     // <a href="../symbols/RouteMap.html#.current">RouteMap.current</a>
-parsed: pre_dispatch parsed // <a href="../symbols/RouteMap.html#.pre_dispatch">RouteMap.pre_dispatch</a>
+path: get_route             // <a href="#.get">RouteMap.get</a>
+parsed: parse path          // <a href="#parse">#parse</a>
+current: longest parsed     // <a href="#.current">RouteMap.current</a>
+parsed: pre_dispatch parsed // <a href="#.pre_dispatch">RouteMap.pre_dispatch</a>
 current: longest parsed     // reset current
 fire matched rules in parsed
-last: current               // <a href="../symbols/RouteMap.html#.last">RouteMap.last</a>
+last: current               // <a href="#.last">RouteMap.last</a>
 </pre></blockquote></div>
 							</td>
 						</tr>
@@ -327,9 +327,9 @@ last: current               // <a href="../symbols/RouteMap.html#.last">RouteMap
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.hash">hash</a></b>(rule, params)
+								<div class="fixedFont">RouteMap.<b><a href="#.hash">hash</a></b>(rule, params)
 								</div>
-								<div class="description">returns a URL fragment by applying parameters to a rule; uses <a href="../symbols/RouteMap.html#compile">#compile</a> and does not catch any errors
+								<div class="description">returns a URL fragment by applying parameters to a rule; uses <a href="#compile">#compile</a> and does not catch any errors
 thrown by that function</div>
 							</td>
 						</tr>
@@ -337,9 +337,9 @@ thrown by that function</div>
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.last">last</a></b>()
+								<div class="fixedFont">RouteMap.<b><a href="#.last">last</a></b>()
 								</div>
-								<div class="description">returns the parsed (see <a href="../symbols/RouteMap.html#parse">#parse</a>) last accessed route; when route listeners are being called,
+								<div class="description">returns the parsed (see <a href="#parse">#parse</a>) last accessed route; when route listeners are being called,
 <code>last</code> is the previously accessed route, after listeners have finished firing, the current parsed
 route replaces <code>last</code>'s value</div>
 							</td>
@@ -348,7 +348,7 @@ route replaces <code>last</code>'s value</div>
 						<tr>
 							<td class="attributes">&lt;private&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/RouteMap.html#parse">parse</a></b>()
+								<div class="fixedFont"><b><a href="#parse">parse</a></b>()
 								</div>
 								<div class="description">parses a path and returns a list of objects that contain argument dictionaries, methods, and raw hash values</div>
 							</td>
@@ -357,7 +357,7 @@ route replaces <code>last</code>'s value</div>
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.parse">parse</a></b>()
+								<div class="fixedFont">RouteMap.<b><a href="#.parse">parse</a></b>()
 								</div>
 								<div class="description">parses a URL fragment into a data structure only if there is a route whose pattern matches the fragment</div>
 							</td>
@@ -366,20 +366,20 @@ route replaces <code>last</code>'s value</div>
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.post_add">post_add</a></b>(compiled)
+								<div class="fixedFont">RouteMap.<b><a href="#.post_add">post_add</a></b>(compiled)
 								</div>
-								<div class="description">this function is called by <a href="../symbols/RouteMap.html#.add">RouteMap.add</a>, it receives a compiled rule object, e.g.</div>
+								<div class="description">this function is called by <a href="#.add">RouteMap.add</a>, it receives a compiled rule object, e.g.</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.pre_dispatch">pre_dispatch</a></b>(parsed)
+								<div class="fixedFont">RouteMap.<b><a href="#.pre_dispatch">pre_dispatch</a></b>(parsed)
 								</div>
-								<div class="description">like <a href="../symbols/RouteMap.html#.post_add">RouteMap.post_add</a> this function can be overwritten to add application-specific code into
+								<div class="description">like <a href="#.post_add">RouteMap.post_add</a> this function can be overwritten to add application-specific code into
 route mapping, it is called before a route begins being dispatched to all matching rules; it receives the
-list of matching parsed route objects (<a href="../symbols/RouteMap.html#parse">#parse</a>) and is expected to return it; one application of this
+list of matching parsed route objects (<a href="#parse">#parse</a>) and is expected to return it; one application of this
 function might be to set application-wide variables like debug flags</div>
 							</td>
 						</tr>
@@ -387,10 +387,10 @@ function might be to set application-wide variables like debug flags</div>
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">RouteMap.<b><a href="../symbols/RouteMap.html#.remove">remove</a></b>(rule)
+								<div class="fixedFont">RouteMap.<b><a href="#.remove">remove</a></b>(rule)
 								</div>
-								<div class="description">counterpart to <a href="../symbols/RouteMap.html#.add">RouteMap.add</a>, removes a rule specification; * <code>remove</code> uses
-<a href="../symbols/RouteMap.html#compile">#compile</a> and does not catch any errors thrown by that function</div>
+								<div class="description">counterpart to <a href="#.add">RouteMap.add</a>, removes a rule specification; * <code>remove</code> uses
+<a href="#compile">#compile</a> and does not catch any errors thrown by that function</div>
 							</td>
 						</tr>
 					
@@ -531,7 +531,7 @@ when its method is called, it will receive this arguments dictionary:<blockquote
      subattr:'something_else',
      rest:''
 }</pre></code></blockquote>
-<code>add</code> uses <a href="../symbols/RouteMap.html#compile">#compile</a> and does not catch any errors thrown by that function</dd>
+<code>add</code> uses <a href="#compile">#compile</a> and does not catch any errors thrown by that function</dd>
 							
 								<dt>
 									<span class="light fixedFont">{String}</span> <b>rule.method</b>
@@ -565,7 +565,7 @@ when its method is called, it will receive this arguments dictionary:<blockquote
 							<dl class="detailList">
 							<dt class="heading">See:</dt>
 							
-								<dd><a href="../symbols/RouteMap.html#.post_add">RouteMap.post_add</a></dd>
+								<dd><a href="#.post_add">RouteMap.post_add</a></dd>
 							
 							</dl>
 						
@@ -643,11 +643,11 @@ an object of the form: <blockquote><pre>{
 							<dl class="detailList">
 							<dt class="heading">See:</dt>
 							
-								<dd><a href="../symbols/RouteMap.html#.add">RouteMap.add</a></dd>
+								<dd><a href="#.add">RouteMap.add</a></dd>
 							
-								<dd><a href="../symbols/RouteMap.html#.hash">RouteMap.hash</a></dd>
+								<dd><a href="#.hash">RouteMap.hash</a></dd>
 							
-								<dd><a href="../symbols/RouteMap.html#.remove">RouteMap.remove</a></dd>
+								<dd><a href="#.remove">RouteMap.remove</a></dd>
 							
 							</dl>
 						
@@ -709,7 +709,7 @@ an object of the form: <blockquote><pre>{
 					
 					</div>
 					<div class="description">
-						returns the parsed (see <a href="../symbols/RouteMap.html#parse">#parse</a>) currently accessed route; after listeners have finished
+						returns the parsed (see <a href="#parse">#parse</a>) currently accessed route; after listeners have finished
 firing, <code>current</code> and <code>last</code> are the same
 						
 						
@@ -734,7 +734,7 @@ firing, <code>current</code> and <code>last</code> are the same
 							<dl class="detailList">
 							<dt class="heading">See:</dt>
 							
-								<dd><a href="../symbols/RouteMap.html#.last">RouteMap.last</a></dd>
+								<dd><a href="#.last">RouteMap.last</a></dd>
 							
 							</dl>
 						
@@ -750,7 +750,7 @@ firing, <code>current</code> and <code>last</code> are the same
 					</div>
 					<div class="description">
 						URL grabber function, defaults to checking the URL fragment (<code>hash</code>); this function should be
-overwritten in a server-side environment; this method is called by <a href="../symbols/RouteMap.html#.handler">RouteMap.handler</a>; without
+overwritten in a server-side environment; this method is called by <a href="#.handler">RouteMap.handler</a>; without
 <code>window.location.hash</code> it will return <code>'/'</code>
 						
 						
@@ -823,18 +823,18 @@ not exist
 					</div>
 					<div class="description">
 						main handler function for routing, this should be bound to <code>hashchange</code> events in the browser, or
-(in conjunction with updating <a href="../symbols/RouteMap.html#.get">RouteMap.get</a>) used with the HTML5 <code>history</code> API, it detects
+(in conjunction with updating <a href="#.get">RouteMap.get</a>) used with the HTML5 <code>history</code> API, it detects
 all the matching route patterns, parses the URL parameters and fires their methods with the arguments from
-the parsed URL; the timing of <a href="../symbols/RouteMap.html#.current">RouteMap.current</a> and <a href="../symbols/RouteMap.html#.last">RouteMap.last</a> being set is as follows
+the parsed URL; the timing of <a href="#.current">RouteMap.current</a> and <a href="#.last">RouteMap.last</a> being set is as follows
 (pseudo-code):
 <blockquote><pre>
-path: get_route             // <a href="../symbols/RouteMap.html#.get">RouteMap.get</a>
-parsed: parse path          // <a href="../symbols/RouteMap.html#parse">#parse</a>
-current: longest parsed     // <a href="../symbols/RouteMap.html#.current">RouteMap.current</a>
-parsed: pre_dispatch parsed // <a href="../symbols/RouteMap.html#.pre_dispatch">RouteMap.pre_dispatch</a>
+path: get_route             // <a href="#.get">RouteMap.get</a>
+parsed: parse path          // <a href="#parse">#parse</a>
+current: longest parsed     // <a href="#.current">RouteMap.current</a>
+parsed: pre_dispatch parsed // <a href="#.pre_dispatch">RouteMap.pre_dispatch</a>
 current: longest parsed     // reset current
 fire matched rules in parsed
-last: current               // <a href="../symbols/RouteMap.html#.last">RouteMap.last</a>
+last: current               // <a href="#.last">RouteMap.last</a>
 </pre></blockquote>
 						
 						
@@ -862,7 +862,7 @@ last: current               // <a href="../symbols/RouteMap.html#.last">RouteMap
 							<dl class="detailList">
 							<dt class="heading">See:</dt>
 							
-								<dd><a href="../symbols/RouteMap.html#.pre_dispatch">RouteMap.pre_dispatch</a></dd>
+								<dd><a href="#.pre_dispatch">RouteMap.pre_dispatch</a></dd>
 							
 							</dl>
 						
@@ -877,7 +877,7 @@ last: current               // <a href="../symbols/RouteMap.html#.last">RouteMap
 					
 					</div>
 					<div class="description">
-						returns a URL fragment by applying parameters to a rule; uses <a href="../symbols/RouteMap.html#compile">#compile</a> and does not catch any errors
+						returns a URL fragment by applying parameters to a rule; uses <a href="#compile">#compile</a> and does not catch any errors
 thrown by that function
 						
 						
@@ -938,7 +938,7 @@ thrown by that function
 					
 					</div>
 					<div class="description">
-						returns the parsed (see <a href="../symbols/RouteMap.html#parse">#parse</a>) last accessed route; when route listeners are being called,
+						returns the parsed (see <a href="#parse">#parse</a>) last accessed route; when route listeners are being called,
 <code>last</code> is the previously accessed route, after listeners have finished firing, the current parsed
 route replaces <code>last</code>'s value
 						
@@ -964,7 +964,7 @@ route replaces <code>last</code>'s value
 							<dl class="detailList">
 							<dt class="heading">See:</dt>
 							
-								<dd><a href="../symbols/RouteMap.html#.current">RouteMap.current</a></dd>
+								<dd><a href="#.current">RouteMap.current</a></dd>
 							
 							</dl>
 						
@@ -1043,7 +1043,7 @@ route replaces <code>last</code>'s value
 								<dt>
 									<span class="light fixedFont">{SyntaxError}</span>  <b></b>
 								</dt>
-								<dd>if hash cannot be parsed by <a href="../symbols/RouteMap.html#parse">#parse</a></dd>
+								<dd>if hash cannot be parsed by <a href="#parse">#parse</a></dd>
 							
 							</dl>
 						
@@ -1069,7 +1069,7 @@ only if a rule with the route: <code>'/foo/:bar'</code> has already been added</
 					
 					</div>
 					<div class="description">
-						this function is called by <a href="../symbols/RouteMap.html#.add">RouteMap.add</a>, it receives a compiled rule object, e.g. for the rule:
+						this function is called by <a href="#.add">RouteMap.add</a>, it receives a compiled rule object, e.g. for the rule:
 <blockquote><code>{route:'/foo/:id/:sub?/attr:/subattr:?/rest:*', method:'console.log'}</code></blockquote>
 <code>post_add</code> would receive the following object:
 <blockquote><code><pre>{
@@ -1127,9 +1127,9 @@ an object that is of the same form (but could possibly have more or fewer parame
 					
 					</div>
 					<div class="description">
-						like <a href="../symbols/RouteMap.html#.post_add">RouteMap.post_add</a> this function can be overwritten to add application-specific code into
+						like <a href="#.post_add">RouteMap.post_add</a> this function can be overwritten to add application-specific code into
 route mapping, it is called before a route begins being dispatched to all matching rules; it receives the
-list of matching parsed route objects (<a href="../symbols/RouteMap.html#parse">#parse</a>) and is expected to return it; one application of this
+list of matching parsed route objects (<a href="#parse">#parse</a>) and is expected to return it; one application of this
 function might be to set application-wide variables like debug flags
 						
 						
@@ -1173,8 +1173,8 @@ function might be to set application-wide variables like debug flags
 					
 					</div>
 					<div class="description">
-						counterpart to <a href="../symbols/RouteMap.html#.add">RouteMap.add</a>, removes a rule specification; * <code>remove</code> uses
-<a href="../symbols/RouteMap.html#compile">#compile</a> and does not catch any errors thrown by that function
+						counterpart to <a href="#.add">RouteMap.add</a>, removes a rule specification; * <code>remove</code> uses
+<a href="#compile">#compile</a> and does not catch any errors thrown by that function
 						
 						
 					</div>
@@ -1189,7 +1189,7 @@ function might be to set application-wide variables like debug flags
 									<span class="light fixedFont">{Object}</span> <b>rule</b>
 									
 								</dt>
-								<dd>the rule specification that was used in <a href="../symbols/RouteMap.html#.add">RouteMap.add</a></dd>
+								<dd>the rule specification that was used in <a href="#.add">RouteMap.add</a></dd>
 							
 							</dl>
 						
@@ -1224,7 +1224,7 @@ function might be to set application-wide variables like debug flags
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Mar 28 2011 15:50:30 GMT+0100 (BST)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Mar 28 2011 15:53:36 GMT+0100 (BST)
 		</div>
 	</body>
 </html>
