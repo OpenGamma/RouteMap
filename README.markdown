@@ -17,12 +17,28 @@ default, `RouteMap.handler` is not associated with any event. If the environment
 function can be used instead. Similarly, if the environment supports the HTML5 `history` API, the `onpopstate` event can
 be bound.
 
-In a server-side setting like Node.js, RouteMap can be imported using `require`:
+In a browser environment RouteMap can be used as is. In a server-side setting like Node.js, RouteMap can be imported
+using `require`:
 
-    var routemap = require('path_to/routemap').RouteMap;
+    var routemap = require('path_to/routemap').RouteMap, listeners;
     routemap.get = function () {
-        /* this function needs to be overwritten in a server-side setting(see docs) */
+        /*
+        this function needs to be overwritten in a server-side setting to receive the path RouteMap will
+        try to match
+        */
     };
+    routemap.go = function () {
+        /* 
+        this function might not be used at all, but in a server-side setting, it needs to be overwritten 
+        to do anything meaningful
+        */
+    };
+    listeners = {
+        foo: {route: '/foo', method: 'foo.handler', handler: function () {console.log('foo handler!');}},
+        bar: {route: '/bar', method: 'bar.handler', handler: function () {console.log('bar handler!');}}
+    };
+    routemap.context(listeners);
+    for (listener in listeners) if (listeners.hasOwnProperty(listener)) routemap.add(listeners[listener]);
 
 
 &copy; 2011 OpenGamma Inc. and the OpenGamma group of companies
