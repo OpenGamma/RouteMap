@@ -70,7 +70,7 @@ for rules' methods. The above examples could, for example work like this:
             load_foo_main:  function (args) {/* do some work (args is an empty object) */},
             load_foo:       function (args) {/* do some work (args is an object that has 'id' in it) */}
         });
-        for (rule in rules) if (rules.hasOwnProperty(rule)) routes.add(rule);
+        for (rule in rules) if (rules.hasOwnProperty(rule)) routes.add(rules[rule]);
     });
 
 The `method` attribute of each rule can drill down arbitrarily deep (e.g., `'foo.bar.baz'`) into the `context` object
