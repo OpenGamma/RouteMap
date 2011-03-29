@@ -80,7 +80,7 @@ Server-Side
 -----------
 In a server-side setting like Node.js, RouteMap can be imported using `require`:
 
-    var routemap = require('path_to/routemap').RouteMap, listeners;
+    var routemap = require('path_to/routemap').RouteMap, listeners, listener;
     routemap.get = function () {
         /*
         this function needs to be overwritten in a server-side setting to receive the path RouteMap will
