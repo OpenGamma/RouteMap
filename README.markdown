@@ -17,8 +17,68 @@ default, `RouteMap.handler` is not associated with any event. If the environment
 function can be used instead. Similarly, if the environment supports the HTML5 `history` API, the `onpopstate` event can
 be bound.
 
-In a browser environment RouteMap can be used as is. In a server-side setting like Node.js, RouteMap can be imported
-using `require`:
+Client-Side
+-----------
+In a browser environment RouteMap can be used as is. Here are some samples:
+
+    // assumes jQuery exists and we are using a modern(ish) browser that supports onhashchange
+    $(function () {
+        var routes = window.RouteMap, rules, rule;
+        // set up window listener and initial fire
+        $(window).bind('hashchange', routes.handler);
+        $(routes.handler); // in addition to binding hash change events to window, also fire it onload
+        // add some rules
+        rules = {
+            load_main:      {route: '/',        method: 'load'},
+            load_foo_main:  {route: '/foo',     method: 'load_foo_main'},
+            load_foo:       {route: '/foo/:id', method: 'load_foo'}
+        };
+        for (rule in rules) if (rules.hasOwnProperty(rule)) routes.add(rule);
+    });
+
+The previous example assumes that `load_main`, `load_foo_main`, and `load_foo` all exist in the global (`window`)
+object:
+
+    window.load_main        = function (args) {
+        // do some work (args is an empty object)
+    };
+    window.load_foo_main    = function (args) {
+        // do some work (args is an empty object)
+    };
+    window.load_foo         = function (args) {
+        // do some work (args is an object that has 'id' in it)
+    };
+
+Typically, you may not want to pollute the global namespace, so `RouteMap` allows changing the context in which it looks
+for rules' methods. The above examples could, for example work like this:
+    
+    // assumes jQuery exists and we are using a modern(ish) browser that supports onhashchange
+    // however, we could be using any other library (or no library!) and we could create a hash polling function, etc.
+    $(function () {
+        var routes = window.RouteMap, rules, rule, listeners;
+        // set up window listener and initial fire
+        $(window).bind('hashchange', routes.handler);
+        $(routes.handler); // in addition to binding hash change events to window, also fire it onload
+        // add some rules
+        rules = {
+            load_main:      {route: '/',        method: 'load_main'},
+            load_foo_main:  {route: '/foo',     method: 'load_foo_main'},
+            load_foo:       {route: '/foo/:id', method: 'load_foo'}
+        };
+        routes.context({
+            load_main:      function (args) {/* do some work (args is an empty object) */},
+            load_foo_main:  function (args) {/* do some work (args is an empty object) */},
+            load_foo:       function (args) {/* do some work (args is an object that has 'id' in it) */}
+        });
+        for (rule in rules) if (rules.hasOwnProperty(rule)) routes.add(rule);
+    });
+
+The `method` attribute of each rule can drill down arbitrarily deep (e.g., `'foo.bar.baz'`) into the `context` object
+and as long as that index exists, `RouteMap` will fire the correct function when a URL matching that pattern is called.
+
+Server-Side
+-----------
+In a server-side setting like Node.js, RouteMap can be imported using `require`:
 
     var routemap = require('path_to/routemap').RouteMap, listeners;
     routemap.get = function () {

@@ -36,12 +36,16 @@
         if (!arr.every || !arr.filter || !arr.indexOf || !arr.map || !arr.reduce || !arr.some)
             throw new Error('See ' + url + ' for reference versions of Array.prototype methods available in JS 1.8');
     })([], 'https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/array/');
-    var active_routes = {}, added_routes = {}, flat_pages = [], last = 0, current = 0, routes, // reference to RouteMap
+    var namespace = 'RouteMap', routes, // internal reference to RouteMap
+        active_routes = {}, added_routes = {}, flat_pages = [],
+        last = 0, current = 0,
+        EQ = '-' /* equal char */, SL = '/' /* slash char */,
+        encode = encodeURIComponent, decode = decodeURIComponent,
         token_exp = /\*|:|\?/, star_exp = /(^([^\*:\?]+):\*)|(^\*$)/, scalar_exp = /^:([^\*:\?]+)(\??)$/,
-        keyval_exp = /^([^\*:\?]+):(\??)$/, trailing_slash_exp = /([^\/])$/,
+        keyval_exp = /^([^\*:\?]+):(\??)$/, trailing_slash_exp = new RegExp('([^' + SL + '])$'),
         context = typeof window !== 'undefined' ? window : {}, // where listeners reside, routes.context() overwrites it
         /** @ignore */
-        invalid_string = function (str) {return typeof str !== 'string' || !str.length;},
+        invalid_str = function (str) {return typeof str !== 'string' || !str.length;},
         /** @ignore */
         has_star = function (arr) {return arr.some(function (val) {return !!val.rules.star;});},
         /** @ignore */
@@ -59,14 +63,14 @@
             // go with the first matching page (longest) or any pages with * rules
             var self = 'parse', pages = flat_pages.filter(function (val) { // add slash to paths so all vals match
                     trailing_slash_exp.exec(path); // this populates RegExp.$1 because replace won't
-                    return ~path.replace(trailing_slash_exp, RegExp.$1 + '/').indexOf(val);
+                    return ~path.replace(trailing_slash_exp, RegExp.$1 + SL).indexOf(val);
                 }).filter(function (page, index) {return !index || has_star(active_routes[page]);});
             return !pages.length ? [] : pages.reduce(function (acc, page) { // flatten parsed rules for all pages
                 var current_page = active_routes[page].map(function (rule_set) {
                     var args = {}, scalars = rule_set.rules.scalars, keyvals = rule_set.rules.keyvals, method,
                         // populate the current request object as a collection of keys/values and scalars
-                        request = path.replace(page, '').split('/').reduce(function (acc, val) {
-                            var split = val.split('='), key = split[0], value = split.slice(1).join('=');
+                        request = path.replace(page, '').split(SL).reduce(function (acc, val) {
+                            var split = val.split(EQ), key = split[0], value = split.slice(1).join(EQ);
                             return !val.length ? acc // discard empty values, separate rest into scalars or keyvals
                                 : (value ? acc.keyvals[key] = value : acc.scalars.push(val)) && acc;
                         }, {keyvals: {}, scalars: []}), star, keyval,
@@ -82,16 +86,16 @@
                             if (request.keyvals.hasOwnProperty(keyval) && !(keyval in keyval_names)) return 0;
                     };
                     request.scalars.slice(0, scalars.length) // populate args scalars
-                        .forEach(function (scalar, index) {args[scalars[index].name] = scalar;});
+                        .forEach(function (scalar, index) {args[scalars[index].name] = decode(scalar);});
                     keyvals.forEach(function (keyval) { // populate args keyvals
-                        if (request.keyvals[keyval.name]) args[keyval.name] = request.keyvals[keyval.name];
+                        if (request.keyvals[keyval.name]) args[keyval.name] = decode(request.keyvals[keyval.name]);
                         delete request.keyvals[keyval.name]; // remove so that * can be constructed
                     });
-                    if (rule_set.rules.star){ // all unused scalars and keyvals go into the * argument
+                    if (rule_set.rules.star){ // all unused scalars and keyvals go into the * argument (still encoded)
                         star = request.scalars.slice(scalars.length, request.scalars.length);
                         for (keyval in request.keyvals) if (request.keyvals.hasOwnProperty(keyval))
-                            star.push(keyval + '=' + request.keyvals[keyval]);
-                        args[rule_set.rules.star] = star.join('/');
+                            star.push([keyval, request.keyvals[keyval]].join(EQ));
+                        args[rule_set.rules.star] = star.join(SL);
                     };
                     try{ // make sure the rule's method actually exists and can be accessed
                         method = rule_set.method.split('.').reduce(function (acc, val) {return acc[val];}, context);
@@ -127,28 +131,32 @@
          * @see RouteMap.hash
          * @see RouteMap.remove
          */
-        compile = function (route) {
-            var self = 'compile', param, compiled_route = route.split('/').reduce(function (acc, val) {
-                var rules = acc.rules, scalars = rules.scalars, keyvals = rules.keyvals;
-                if (rules.star) throw new SyntaxError(self + ': no rules can follow a * directive');
-                // construct the name of the page
-                if (!~val.search(token_exp) && !scalars.length && !keyvals.length) return acc.page.push(val) && acc;
-                // construct the parameters
-                if (val.match(star_exp)) return (rules.star = RegExp.$2 || RegExp.$3) && acc;
-                if (val.match(scalar_exp)){
-                    if (!RegExp.$2 && acc.last_optional) // required scalars cannot follow optional scalars
-                        throw new SyntaxError(self + ': "' + val + '" cannot follow an optional rule');
-                    if (!!RegExp.$2) acc.last_optional = val;
-                    return scalars.push({name: RegExp.$1, required: !RegExp.$2}) && acc;
-                };
-                if (val.match(keyval_exp)) return keyvals.push({name: RegExp.$1, required: !RegExp.$2}) && acc;
-                throw new SyntaxError(self + ': the rule "' + val + '" was not understood');
-            }, {page: [], rules: {scalars: [], keyvals: [], star: false}, last_optional: ''});
-            delete compiled_route.last_optional; // this is just a temporary value and should not be exposed publicly
-            compiled_route.page = compiled_route.page.join('/').replace(/\/$/, '') || '/'; // cast as string
-            return compiled_route;
-        };
-    return pub.RouteMap = (routes) = { // parens around routes to satisfy JSDoc's caprice
+        compile = (function () {
+            var memo = {}; // compile is slow so cache compiled objects here
+            return function (route) {
+                if (route in memo) return memo[route];
+                var self = 'compile', param, compiled_route = route.split(SL).reduce(function (acc, val) {
+                    var rules = acc.rules, scalars = rules.scalars, keyvals = rules.keyvals;
+                    if (rules.star) throw new SyntaxError(self + ': no rules can follow a * directive');
+                    // construct the name of the page
+                    if (!~val.search(token_exp) && !scalars.length && !keyvals.length) return acc.page.push(val) && acc;
+                    // construct the parameters
+                    if (val.match(star_exp)) return (rules.star = RegExp.$2 || RegExp.$3) && acc;
+                    if (val.match(scalar_exp)){
+                        if (!RegExp.$2 && acc.last_optional) // required scalars cannot follow optional scalars
+                            throw new SyntaxError(self + ': "' + val + '" cannot follow an optional rule');
+                        if (!!RegExp.$2) acc.last_optional = val;
+                        return scalars.push({name: RegExp.$1, required: !RegExp.$2}) && acc;
+                    };
+                    if (val.match(keyval_exp)) return keyvals.push({name: RegExp.$1, required: !RegExp.$2}) && acc;
+                    throw new SyntaxError(self + ': the rule "' + val + '" was not understood');
+                }, {page: [], rules: {scalars: [], keyvals: [], star: false}, last_optional: ''});
+                delete compiled_route.last_optional; // this is just a temporary value and should not be exposed
+                compiled_route.page = compiled_route.page.join(SL).replace(new RegExp(SL + '$'), '') || SL;
+                return memo[route] = compiled_route;
+            };
+        })();
+    return pub[namespace] = (routes) = { // parens around routes to satisfy JSDoc's caprice
         /**
          * adds a rule to the internal table of routes and methods
          * @name RouteMap.add
@@ -157,13 +165,13 @@
          * @param {Object} rule rule specification
          * @param {String} rule.route route pattern definition; there are three types of pattern arguments: scalars,
          * keyvals, and stars; scalars are individual values in a URL (all URL values are separate by the
-         * <code>'/'</code> character), keyvals are named values, e.g. 'foo=bar', and star values are wildcards; so for
+         * <code>'/'</code> character), keyvals are named values, e.g. 'foo-bar', and star values are wildcards; so for
          * example, the following pattern represents all the possible options:<blockquote>
          * <code>'/foo/:id/:sub?/attr:/subattr:?/rest:*'</code></blockquote>the <code>?</code> means that argument is
          * optional, the star rule is named <code>rest</code> but it could have just simply been left as <code>*</code>,
          * which means the resultant dictionary would have put the wildcard remainder into <code>args['*']</code>
          * instead of <code>args.rest</code>; so the following URL would match the pattern above:<blockquote>
-         * <code>/foo/23/45/attr=something/subattr=something_else</code></blockquote>
+         * <code>/foo/23/45/attr-something/subattr-something_else</code></blockquote>
          * when its method is called, it will receive this arguments dictionary:<blockquote>
          * <code><pre>{
          *      id:'23',
@@ -180,7 +188,7 @@
          */
         add: function (rule) {
             var self = 'add', method = rule.method, route = rule.route, compiled, id = fingerprint(rule);
-            if ([route, method].some(invalid_string))
+            if ([route, method].some(invalid_str))
                 throw new TypeError(self + ': rule.route and rule.method must both be non-empty strings');
             if (id in added_routes) throw new Error(self + ': ' + route + ' to ' + method + ' already exists');
             compiled = compile(route);
@@ -220,8 +228,7 @@
          * @type String
          */
         get: function () {
-            return typeof window !== 'undefined' && window.location &&
-                window.location.hash && window.location.hash.substring(1) || '/';
+            return typeof window === 'undefined' ? SL : window.location.hash && window.location.hash.substring(1) || SL;
         },
         /**
          * in a browser setting, it changes <code>window.location.hash</code>, in other settings, it should be
@@ -232,7 +239,7 @@
          * @type undefined
          * @param {String} hash the hash fragment to go to
          */
-        go: function (hash) {if (typeof window !== 'undefined' && window.location) window.location.hash = hash;},
+        go: function (hash) {if (typeof window !== 'undefined') window.location.hash = hash;},
         /**
          * main handler function for routing, this should be bound to <code>hashchange</code> events in the browser, or
          * (in conjunction with updating {@link RouteMap.get}) used with the HTML5 <code>history</code> API, it detects
@@ -248,10 +255,10 @@
          * fire matched rules in parsed
          * last: current               // {@link RouteMap.last}
          * </pre></blockquote>
+         * <code>RouteMap.handler</code> calls {@link #parse} and does not catch any errors that function throws
          * @name RouteMap.handler
          * @function
          * @type undefined
-         * @throws {TypeError} if a matched rule's <code>method</code> is not a function
          * @see RouteMap.pre_dispatch
          */
         handler: function () {
@@ -276,22 +283,22 @@
          */
         hash: function (rule, params) {
             var self = 'hash', hash, compiled, params = params || {};
-            if (invalid_string(rule.route)) throw new TypeError(self + ': rule.route must be a non-empty string');
+            if (invalid_str(rule.route)) throw new TypeError(self + ': rule.route must be a non-empty string');
             compiled = compile(rule.route);
-            hash = compiled.page + (compiled.page === '/' ? '' : '/') + // 1. start with page, then add params
+            hash = compiled.page + (compiled.page === SL ? '' : SL) + // 1. start with page, then add params
                 compiled.rules.scalars.map(function (val) { // 2. add scalar values next
-                    var bad_param = params[val.name] === void 0 || invalid_string(params[val.name] + '');
+                    var value = encode(params[val.name]), bad_param = params[val.name] === void 0 || invalid_str(value);
                     if (val.required && bad_param) throw new TypeError(self + ': params.' + val.name + ' is undefined');
-                    return bad_param ? 0 : '' + params[val.name]; // cast all values strings
+                    return bad_param ? 0 : value;
                 })
                 .concat(compiled.rules.keyvals.map(function (val) { // 3. then concat keyval values
-                    var bad_param = params[val.name] === void 0 || invalid_string(params[val.name] + '');
+                    var value = encode(params[val.name]), bad_param = params[val.name] === void 0 || invalid_str(value);
                     if (val.required && bad_param) throw new TypeError(self + ': params.' + val.name + ' is undefined');
-                    return bad_param ? 0 : val.name + '=' + params[val.name];
+                    return bad_param ? 0 : val.name + EQ + value;
                 }))
-                .filter(Boolean).join('/'); // remove empty (0) values
+                .filter(Boolean).join(SL); // remove empty (0) values
             if (compiled.rules.star && params[compiled.rules.star]) // 4. add star value if it exists
-                hash += (hash[hash.length - 1] === '/' ? '' : '/') + params[compiled.rules.star];
+                hash += (hash[hash.length - 1] === SL ? '' : SL) + params[compiled.rules.star];
             return hash;
         },
         /**
@@ -317,7 +324,7 @@
          */
         parse: function (hash) {
             var self = 'parse', parsed;
-            if (invalid_string(hash)) throw new TypeError(self + ': hash must be a non-empty string');
+            if (invalid_str(hash)) throw new TypeError(self + ': hash must be a non-empty string');
             if (!(parsed = parse(hash)).length) throw new SyntaxError(self + ': ' + hash + ' cannot be parsed');
             return {page: parsed[0].page, args: parsed[0].args};
         },
@@ -368,7 +375,7 @@
          */
         remove: function (rule) {
             var self = 'remove', method = rule.method, route = rule.route, compiled, id = fingerprint(rule), index;
-            if ([route, method].some(invalid_string))
+            if ([route, method].some(invalid_str))
                 throw new TypeError(self + ': rule.route and rule.method must both be non-empty strings');
             if (!(id in added_routes)) return;
             compiled = compile(route);
