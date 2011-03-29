@@ -55,7 +55,7 @@ for rules' methods. The above examples could, for example work like this:
     // assumes jQuery exists and we are using a modern(ish) browser that supports onhashchange
     // however, we could be using any other library (or no library!) and we could create a hash polling function, etc.
     $(function () {
-        var routes = window.RouteMap, rules, rule, listeners;
+        var routes = window.RouteMap, rules, rule;
         // set up window listener and initial fire
         $(window).bind('hashchange', routes.handler);
         $(routes.handler); // in addition to binding hash change events to window, also fire it onload
