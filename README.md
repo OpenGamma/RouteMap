@@ -5,7 +5,7 @@ URL Mapping Library for client-side and server-side JS
 
 See [JSDoc documentation](http://opengamma.github.com/RouteMap "RouteMap.js Documentation").
 
-RouteMap maps URL patterns to methods. It is written in "plain old" JavaScript and can be used in conjunction with any
+`RouteMap` maps URL patterns to methods. It is written in "plain old" JavaScript and can be used in conjunction with any
 other libraries. It does, however, require JavaScript 1.8 Array methods (such as `map`, `filter`, `reduce`, etc.). If
 these methods do not exist, it will throw an error.
 [Reference implementations](https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/array/) of these errors
@@ -17,11 +17,75 @@ default, `RouteMap.handler` is not associated with any event. If the environment
 function can be used instead. Similarly, if the environment supports the HTML5 `history` API, the `onpopstate` event can
 be bound.
 
-Client-Side
------------
-In a browser environment RouteMap can be used as is. Here are some samples:
+Hashbang (#!)
+---------------
 
+The URL patterns `RouteMap` uses are based on a file-system path analogy, so all patterns must begin with a `'/'`
+character. In order to support the
+[hashbang convention](http://code.google.com/web/ajaxcrawling/docs/specification.html), even though all URL patterns
+must begin with `'/'`, a prefix can be specified. The default prefix value is `'#'` but if you want your site to be
+indexed, you can switch the prefix to be `'#!'`:
+
+    RouteMap.prefix('#!');
+
+Directives
+----------
+
+Routes added to `RouteMap` can be static URLs, or they can have dynamic components that get parsed and passed into their
+respective methods inside an arguments dictionary. There are three basic types of directives:
+
+### (a) unnamed ###
+Consider the rule:
+
+    RouteMap.add({route: '/users/:id', method: 'users.get'});
+
+`:id` can be any scalar value as long as it does not contain a `'/'` character. So for example, the URL: `/users/45`
+would cause `users.get` to be invoked with one argument: `{id: '45'}`
+
+An unnamed token can be followed by a `'?'` character to indicate it is optional, but no other unnamed parameter can
+follow an optional unnamed parameter, because that would lead to ambiguous URLs:
+
+    RouteMap.add({route: '/users/:id/:fave?',           method: 'users.get'}); // works
+    RouteMap.add({route: '/users/:id/:fave?/:other',    method: 'users.get'}); // throws an error
+
+### (b) named ###
+Named tokens of rule expressions are different from unnamed tokens in that they can appear anywhere in a URL. Because
+they are key/value pairs, their order can be arbitrary. Here is an example:
+
+    RouteMap.add({route: '/users/id:', method: 'users.get'});
+
+Notice that the colon comes *after* the token name `id`. A matching URL for this rule would look like: `/users/id-45`
+
+The reason a hyphen character is used instead of an equal sign is so that it won't need to be escaped. `RouteMap` will
+automatically URL encode/decode values when generating URLs and parsing them, but its own tokens do not require
+escaping.
+
+### (c) star ###
+Star directives act like a sieve. Normally, if a URL matches a pattern but has extraneous parameters, then it is not
+considered a match and `RouteMap` will not fire that patterns handler. But if a star directive exists at the end of the
+rule, like in these examples:
+
+    RouteMap.add({route: '/users/id:/*',        method: 'users.get'});
+    RouteMap.add({route: '/users/id:/extras:*', method: 'users.get_two'});
+
+Then URLs with extraneous information like `/users/45/something_else/goes-here` will still match. In the case of the
+rules above, the following function calls will fire:
+
+    users.get({id: '45', '*': '/something_else/goes-here'});
+    users.get_two({id: '45', extras: '/something_else/goes-here'});
+
+However, star directives are not exactly wildcards, they may not preserve the order of the extraneous items in a URL.
+They will always put all of the unnamed extra pieces of a URL *before* the named pieces. So if the URL
+`/users/45/goes-here/something_else` is accessed, the arguments will still be exactly as they are above.
+
+Client-Side Sample
+------------------
+In a browser environment `RouteMap` can be used as is. Here are some samples:
+
+    <script type="text/javascript" src="/path/to/jquery.js"></script>
+    <script type="text/javascript" src="/path/to/routemap.js"></script>
     // assumes jQuery exists and we are using a modern(ish) browser that supports onhashchange
+    // but jQuery is not necessary to use RouteMap, just shown here for event handling
     $(function () {
         var routes = window.RouteMap, rules, rule;
         // set up window listener and initial fire
@@ -76,11 +140,11 @@ for rules' methods. The above examples could, for example work like this:
 The `method` attribute of each rule can drill down arbitrarily deep (e.g., `'foo.bar.baz'`) into the `context` object
 and as long as that index exists, `RouteMap` will fire the correct function when a URL matching that pattern is called.
 
-Server-Side
------------
-In a server-side setting like Node.js, RouteMap can be imported using `require`:
+Server-Side Sample
+------------------
+In a server-side setting like Node.js, `RouteMap` can be imported using `require`:
 
-    var routemap = require('path_to/routemap').RouteMap, listeners, listener;
+    var routemap = require('path_to/routemap').RouteMap, rules, rule;
     routemap.get = function () {
         /*
         this function needs to be overwritten in a server-side setting to receive the path RouteMap will
@@ -93,12 +157,12 @@ In a server-side setting like Node.js, RouteMap can be imported using `require`:
         to do anything meaningful
         */
     };
-    listeners = {
+    rules = {
         foo: {route: '/foo', method: 'foo.handler', handler: function () {console.log('foo handler!');}},
         bar: {route: '/bar', method: 'bar.handler', handler: function () {console.log('bar handler!');}}
     };
-    routemap.context(listeners);
-    for (listener in listeners) if (listeners.hasOwnProperty(listener)) routemap.add(listeners[listener]);
+    routemap.context(rules);
+    for (rule in rules) if (rules.hasOwnProperty(rule)) routemap.add(rules[rule]);
 
 
 &copy; 2011 OpenGamma Inc. and the OpenGamma group of companies

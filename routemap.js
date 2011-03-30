@@ -39,10 +39,11 @@
     var namespace = 'RouteMap', routes, // internal reference to RouteMap
         active_routes = {}, added_routes = {}, flat_pages = [],
         last = 0, current = 0,
-        EQ = '-' /* equal char */, SL = '/' /* slash char */,
+        EQ = '-' /* equal string */, SL = '/' /* slash string */, PR = '#' /* default prefix string */,
         encode = encodeURIComponent, decode = decodeURIComponent,
         token_exp = /\*|:|\?/, star_exp = /(^([^\*:\?]+):\*)|(^\*$)/, scalar_exp = /^:([^\*:\?]+)(\??)$/,
         keyval_exp = /^([^\*:\?]+):(\??)$/, trailing_slash_exp = new RegExp('([^' + SL + '])$'),
+        prefix_exp = new RegExp('^' + PR),
         context = typeof window !== 'undefined' ? window : {}, // where listeners reside, routes.context() overwrites it
         /** @ignore */
         invalid_str = function (str) {return typeof str !== 'string' || !str.length;},
@@ -116,7 +117,7 @@
          * @param {String} route
          * @throws {SyntaxError} if any portion of a rule definition follows a <code>*</code> directive
          * @throws {SyntaxError} if a required scalar follows an optional scalar
-         * @throws {SyntaxError} rule cannot be parsed
+         * @throws {SyntaxError} if a rule cannot be parsed
          * @type {Object}
          * @returns {Object} a compiled object, for example, the rule <code>'/foo/:id/type:?/rest:*'</code> would return
          * an object of the form: <blockquote><pre>{
@@ -134,8 +135,11 @@
         compile = (function () {
             var memo = {}; // compile is slow so cache compiled objects here
             return function (route) {
+                var self = 'compile', param, compiled_route, orig = route;
+                route = route[0] === SL ? route : ~route.indexOf(SL) ? route.slice(route.indexOf(SL)) : null;
+                if (!route) throw new SyntaxError(self + ': the route "' + orig + '" was not understood');
                 if (route in memo) return memo[route];
-                var self = 'compile', param, compiled_route = route.split(SL).reduce(function (acc, val) {
+                compiled_route = route.split(SL).reduce(function (acc, val) {
                     var rules = acc.rules, scalars = rules.scalars, keyvals = rules.keyvals;
                     if (rules.star) throw new SyntaxError(self + ': no rules can follow a * directive');
                     // construct the name of the page
@@ -223,12 +227,15 @@
          * <code>window.location.hash</code> it will return <code>'/'</code>
          * @name RouteMap.get
          * @function
-         * @returns {String} by default, this returns a subset of the URL hash, but if overwritten, it must be a
-         * function that returns URL path strings to match added rules
+         * @returns {String} by default, this returns a subset of the URL hash (everything after the first
+         * <code>'/'</code> character ... if nothing follows a slash, it returns <code>'/'</code>); if overwritten, it
+         * must be a function that returns URL path strings (beginning with <code>'/'</code>) to match added rules
          * @type String
          */
         get: function () {
-            return typeof window === 'undefined' ? SL : window.location.hash && window.location.hash.substring(1) || SL;
+            if (typeof window === 'undefined') return SL;
+            var hash = window.location.hash, index = hash.indexOf(SL);
+            return ~index ? hash.slice(index) : SL;
         },
         /**
          * in a browser setting, it changes <code>window.location.hash</code>, in other settings, it should be
@@ -239,7 +246,9 @@
          * @type undefined
          * @param {String} hash the hash fragment to go to
          */
-        go: function (hash) {if (typeof window !== 'undefined') window.location.hash = hash;},
+        go: function (hash) {
+            if (typeof window !== 'undefined') window.location.hash = (hash.indexOf(PR) === 0 ? '' : PR) +  hash;
+        },
         /**
          * main handler function for routing, this should be bound to <code>hashchange</code> events in the browser, or
          * (in conjunction with updating {@link RouteMap.get}) used with the HTML5 <code>history</code> API, it detects
@@ -319,12 +328,13 @@
          * @type Object
          * @returns {Object} of the form: <blockquote><code>{page:'/foo', args:{bar:'some_value'}}</code></blockquote>
          * only if a rule with the route: <code>'/foo/:bar'</code> has already been added
-         * @throws {TypeError} if hash is not a string or is empty
+         * @throws {TypeError} if hash is not a string, is empty, or does not contain a <code>'/'</code> character
          * @throws {SyntaxError} if hash cannot be parsed by {@link #parse}
          */
         parse: function (hash) {
             var self = 'parse', parsed;
-            if (invalid_str(hash)) throw new TypeError(self + ': hash must be a non-empty string');
+            hash = ~hash.indexOf(SL) ? hash.slice(hash.indexOf(SL)) : '';
+            if (invalid_str(hash)) throw new TypeError(self + ': hash must be a string with a ' + SL + ' character');
             if (!(parsed = parse(hash)).length) throw new SyntaxError(self + ': ' + hash + ' cannot be parsed');
             return {page: parsed[0].page, args: parsed[0].args};
         },
@@ -364,6 +374,15 @@
          * @param {Array} parsed the parsed request
          */
         pre_dispatch: function (parsed) {return parsed;},
+        /**
+         * if a string is passed in, it overwrites the prefix that is removed from each URL before parsing; primarily
+         * used for hashbang (<code>#!</code>); either way, it returns the current prefix
+         * @name RouteMap.prefix
+         * @function
+         * @type undefined
+         * @param {String} prefix (optional) the prefix string
+         */
+        prefix: function (prefix) {return PR = (prefix + '' || typeof prefix === 'string' ? prefix : PR);},
         /**
          * counterpart to {@link RouteMap.add}, removes a rule specification; * <code>remove</code> uses
          * {@link #compile} and does not catch any errors thrown by that function
