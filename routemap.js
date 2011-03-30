@@ -379,7 +379,8 @@
          * used for hashbang (<code>#!</code>); either way, it returns the current prefix
          * @name RouteMap.prefix
          * @function
-         * @type undefined
+         * @type String
+         * @returns {String} the prefix currently in use (if being replaced, it returns the new prefix)
          * @param {String} prefix (optional) the prefix string
          */
         prefix: function (prefix) {return PR = (prefix + '' || typeof prefix === 'string' ? prefix : PR);},
