@@ -54,11 +54,9 @@ they are key/value pairs, their order can be arbitrary. Here is an example:
 
     RouteMap.add({route: '/users/id:', method: 'users.get'});
 
-Notice that the colon comes *after* the token name `id`. A matching URL for this rule would look like: `/users/id-45`
+Notice that the colon comes *after* the token name `id`. A matching URL for this rule would look like: `/users/id=45`
 
-The reason a hyphen character is used instead of an equal sign is so that it won't need to be escaped. `RouteMap` will
-automatically URL encode/decode values when generating URLs and parsing them, but its own tokens do not require
-escaping.
+`RouteMap` will automatically URL encode/decode values when generating URLs and parsing them.
 
 ### (c) star ###
 Star directives act like a sieve. Normally, if a URL matches a pattern but has extraneous parameters, then it is not
@@ -68,15 +66,15 @@ rule, like in these examples:
     RouteMap.add({route: '/users/id:/*',        method: 'users.get'});
     RouteMap.add({route: '/users/id:/extras:*', method: 'users.get_two'});
 
-Then URLs with extraneous information like `/users/45/something_else/goes-here` will still match. In the case of the
+Then URLs with extraneous information like `/users/45/something_else/goes=here` will still match. In the case of the
 rules above, the following function calls will fire:
 
-    users.get({id: '45', '*': '/something_else/goes-here'});
-    users.get_two({id: '45', extras: '/something_else/goes-here'});
+    users.get({id: '45', '*': '/something_else/goes=here'});
+    users.get_two({id: '45', extras: '/something_else/goes=here'});
 
 However, star directives are not exactly wildcards, they may not preserve the order of the extraneous items in a URL.
 They will always put all of the unnamed extra pieces of a URL *before* the named pieces. So if the URL
-`/users/45/goes-here/something_else` is accessed, the arguments will still be exactly as they are above.
+`/users/45/goes=here/something_else` is accessed, the arguments will still be exactly as they are above.
 
 Client-Side Sample
 ------------------

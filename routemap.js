@@ -39,7 +39,7 @@
     var namespace = 'RouteMap', routes, // internal reference to RouteMap
         active_routes = {}, added_routes = {}, flat_pages = [],
         last = 0, current = 0,
-        EQ = '-' /* equal string */, SL = '/' /* slash string */, PR = '#' /* default prefix string */,
+        EQ = '=' /* equal string */, SL = '/' /* slash string */, PR = '#' /* default prefix string */,
         encode = encodeURIComponent, decode = decodeURIComponent,
         token_exp = /\*|:|\?/, star_exp = /(^([^\*:\?]+):\*)|(^\*$)/, scalar_exp = /^:([^\*:\?]+)(\??)$/,
         keyval_exp = /^([^\*:\?]+):(\??)$/, trailing_slash_exp = new RegExp('([^' + SL + '])$'),
@@ -169,13 +169,13 @@
          * @param {Object} rule rule specification
          * @param {String} rule.route route pattern definition; there are three types of pattern arguments: scalars,
          * keyvals, and stars; scalars are individual values in a URL (all URL values are separate by the
-         * <code>'/'</code> character), keyvals are named values, e.g. 'foo-bar', and star values are wildcards; so for
+         * <code>'/'</code> character), keyvals are named values, e.g. 'foo=bar', and star values are wildcards; so for
          * example, the following pattern represents all the possible options:<blockquote>
          * <code>'/foo/:id/:sub?/attr:/subattr:?/rest:*'</code></blockquote>the <code>?</code> means that argument is
          * optional, the star rule is named <code>rest</code> but it could have just simply been left as <code>*</code>,
          * which means the resultant dictionary would have put the wildcard remainder into <code>args['*']</code>
          * instead of <code>args.rest</code>; so the following URL would match the pattern above:<blockquote>
-         * <code>/foo/23/45/attr-something/subattr-something_else</code></blockquote>
+         * <code>/foo/23/45/attr=something/subattr=something_else</code></blockquote>
          * when its method is called, it will receive this arguments dictionary:<blockquote>
          * <code><pre>{
          *      id:'23',
@@ -379,8 +379,7 @@
          * used for hashbang (<code>#!</code>); either way, it returns the current prefix
          * @name RouteMap.prefix
          * @function
-         * @type String
-         * @returns {String} the prefix currently in use (if being replaced, it returns the new prefix)
+         * @type undefined
          * @param {String} prefix (optional) the prefix string
          */
         prefix: function (prefix) {return PR = (prefix + '' || typeof prefix === 'string' ? prefix : PR);},
