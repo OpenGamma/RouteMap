@@ -73,7 +73,7 @@
                         request = path.replace(page, '').split(SL).reduce(function (acc, val) {
                             var split = val.split(EQ), key = split[0], value = split.slice(1).join(EQ);
                             return !val.length ? acc // discard empty values, separate rest into scalars or keyvals
-                                : (value ? acc.keyvals[key] = value : acc.scalars.push(val)) && acc;
+                                : (value ? acc.keyvals[key] = value : acc.scalars.push(val)),  acc;
                         }, {keyvals: {}, scalars: []}), star, keyval,
                         keyval_names = keyvals.reduce(function (acc, val) {return (acc[val.name] = 0) || acc;}, {}),
                         required_scalars_length = scalars.filter(function (val) {return val.required;}).length,
@@ -143,16 +143,16 @@
                     var rules = acc.rules, scalars = rules.scalars, keyvals = rules.keyvals;
                     if (rules.star) throw new SyntaxError(self + ': no rules can follow a * directive');
                     // construct the name of the page
-                    if (!~val.search(token_exp) && !scalars.length && !keyvals.length) return acc.page.push(val) && acc;
+                    if (!~val.search(token_exp) && !scalars.length && !keyvals.length) return acc.page.push(val), acc;
                     // construct the parameters
-                    if (val.match(star_exp)) return (rules.star = RegExp.$2 || RegExp.$3) && acc;
+                    if (val.match(star_exp)) return (rules.star = RegExp.$2 || RegExp.$3), acc;
                     if (val.match(scalar_exp)){
                         if (!RegExp.$2 && acc.last_optional) // required scalars cannot follow optional scalars
                             throw new SyntaxError(self + ': "' + val + '" cannot follow an optional rule');
                         if (!!RegExp.$2) acc.last_optional = val;
-                        return scalars.push({name: RegExp.$1, required: !RegExp.$2}) && acc;
+                        return scalars.push({name: RegExp.$1, required: !RegExp.$2}), acc;
                     };
-                    if (val.match(keyval_exp)) return keyvals.push({name: RegExp.$1, required: !RegExp.$2}) && acc;
+                    if (val.match(keyval_exp)) return keyvals.push({name: RegExp.$1, required: !RegExp.$2}), acc;
                     throw new SyntaxError(self + ': the rule "' + val + '" was not understood');
                 }, {page: [], rules: {scalars: [], keyvals: [], star: false}, last_optional: ''});
                 delete compiled_route.last_optional; // this is just a temporary value and should not be exposed
@@ -222,6 +222,16 @@
          */
         current: function () {return current;},
         /**
+         * this function is fired when no rule is matched by a URL, by default it does nothing, but it could be set up
+         * to handle things like <code>404</code> responses on the server-side or bad hash fragments in the browser
+         * @name RouteMap.default_handler
+         * @function
+         * @type undefined
+         * @param {String} url the path that was attempted will be passed into this function, any additional arguments
+         * that were passed into {@link RouteMap.handler} will also get passed into this function
+         */
+        default_handler: function (url) {},
+        /**
          * URL grabber function, defaults to checking the URL fragment (<code>hash</code>); this function should be
          * overwritten in a server-side environment; this method is called by {@link RouteMap.handler}; without
          * <code>window.location.hash</code> it will return <code>'/'</code>
@@ -264,6 +274,8 @@
          * fire matched rules in parsed
          * last: current               // {@link RouteMap.last}
          * </pre></blockquote>
+         * in addition to the URL parameters, it passes any other arguments it receives to the resultant listeners,
+         * which is useful in a server-side setting for passing <code>request</code> and <code>response</code> objects
          * <code>RouteMap.handler</code> calls {@link #parse} and does not catch any errors that function throws
          * @name RouteMap.handler
          * @function
@@ -271,12 +283,13 @@
          * @see RouteMap.pre_dispatch
          */
         handler: function () {
-            var parsed = parse(routes.get());
-            if (parsed.length) current = parsed[0]; // set current to the longest hash before pre_dispatch touches it
+            var url = routes.get(), parsed = parse(url), args = Array.prototype.slice.call(arguments);
+            if (!parsed.length) return routes.default_handler.apply(null, [url].concat(args));
+            current = parsed[0]; // set current to the longest hash before pre_dispatch touches it
             parsed = routes.pre_dispatch(parsed); // pre_dispatch might change the contents of parsed
-            if (parsed.length) current = parsed[0]; // set current to the longest hash again after pre_dispatch
-            parsed.forEach(function (val) {val.method(val.args);}); // fire requested methods with params from URL
-            if (parsed.length) last = parsed[0]; // set last to the longest hash
+            current = parsed[0]; // set current to the longest hash again after pre_dispatch
+            parsed.forEach(function (val) {val.method.apply(null, [val.args].concat(args));}); // fire requested methods
+            last = parsed[0];
         },
         /**
          * returns a URL fragment by applying parameters to a rule; uses {@link #compile} and does not catch any errors

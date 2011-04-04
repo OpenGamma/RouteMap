@@ -140,27 +140,57 @@ and as long as that index exists, `RouteMap` will fire the correct function when
 
 Server-Side Sample
 ------------------
-In a server-side setting like Node.js, `RouteMap` can be imported using `require`:
+In a server-side setting like Node.js, `RouteMap` can be imported using `require`. Because the client-side functionality
+does not distinguish between different HTTP requests (`GET`, `POST`, `HEAD`, etc.), the server-side version will likely
+need a dispatcher function if you need to distinguish between different request types. The example below shows a server
+that will answer `GET` requests to `/` and `POST` requests to `/foo` and will return a not-found message to all other
+requests (by overwriting `RouteMap.default_handler`). Note that the `RouteMap.handler` function is passed the `request`
+and `response` objects, which means they get passed into each listener as additional parameters after the `args` object.
 
-    var routemap = require('path_to/routemap').RouteMap, rules, rule;
-    routemap.get = function () {
-        /*
-        this function needs to be overwritten in a server-side setting to receive the path RouteMap will
-        try to match
-        */
-    };
-    routemap.go = function () {
-        /* 
-        this function might not be used at all, but in a server-side setting, it needs to be overwritten 
-        to do anything meaningful
-        */
-    };
-    rules = {
-        foo: {route: '/foo', method: 'foo.handler', handler: function () {console.log('foo handler!');}},
-        bar: {route: '/bar', method: 'bar.handler', handler: function () {console.log('bar handler!');}}
-    };
-    routemap.context(rules);
-    for (rule in rules) if (rules.hasOwnProperty(rule)) routemap.add(rules[rule]);
+    var http = require('http'), routemap = require('./routemap').RouteMap, PORT = 8124;
+    (function () {
+        var listeners, dispatch, rules, rule;
+        listeners = {
+            main: {
+                get: function (args, request, response) {
+                    response.writeHead(200, {'Content-Type': 'text/plain'});
+                    response.write('GET / happened\n');
+                }
+            },
+            foo: {
+                post: function (args, request, response) {
+                    response.writeHead(200, {'Content-Type': 'text/plain'});
+                    response.write('POST /foo happened\n');
+                }
+            }
+        };
+        dispatch = function (listener, request, response) {
+            return function (args, request, response) {
+                var method = request.method.toLowerCase();
+                if (listeners[listener] && listeners[listener][method])
+                    listeners[listener][method](args, request, response);
+                else
+                    routemap.default_handler(request.url, request, response);
+            };
+        };
+        rules = {
+            main:   {route: '/',    method: 'main.handler', handler: dispatch('main')},
+            foo:    {route: '/foo', method: 'foo.handler',  handler: dispatch('foo')},
+        };
+        // set up routemap
+        routemap.context(rules); // where routemap looks for the methods specified
+        for (rule in rules) routemap.add(rules[rule]);
+        routemap.default_handler = function (url, request, response) {
+            response.writeHead(404, {'Content-Type': 'text/plain'});
+            response.write('Sorry!\n' + request.method + ' ' + request.url + ' does not work');
+        };
+    })();
+    http.createServer(function (request, response) {
+        routemap.get = function () {return request.url;};
+        routemap.handler(request, response);
+        response.end();
+    }).listen(PORT, '127.0.0.1');
+    console.log('HTTP listening on port ' + PORT + '\nCTRL-C to bail');
 
 
 &copy; 2011 OpenGamma Inc. and the OpenGamma group of companies
