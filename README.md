@@ -182,7 +182,7 @@ and `response` objects, which means they get passed into each listener as additi
         rules = {
             main:   {route: '/',    method: 'main.handler', handler: dispatch('main')},
             foo:    {route: '/foo', method: 'foo.handler',  handler: dispatch('foo')},
-            foo:    {route: '/bar/:id', method: 'foo.handler',  handler: dispatch('bar')}
+            bar:    {route: '/bar/:id', method: 'bar.handler',  handler: dispatch('bar')}
         };
         // set up routemap
         routemap.context(rules); // where routemap looks for the methods specified
