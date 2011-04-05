@@ -162,9 +162,15 @@ and `response` objects, which means they get passed into each listener as additi
                     response.writeHead(200, {'Content-Type': 'text/plain'});
                     response.write('POST /foo happened\n');
                 }
+            },
+            bar: {
+                get: function (args, request, response) {
+                    response.writeHead(200, {'Content-Type': 'text/plain'});
+                    response.write('here is bar[' + args.id + ']\n');
+                }
             }
         };
-        dispatch = function (listener, request, response) {
+        dispatch = function (listener) {
             return function (args, request, response) {
                 var method = request.method.toLowerCase();
                 if (listeners[listener] && listeners[listener][method])
@@ -176,6 +182,7 @@ and `response` objects, which means they get passed into each listener as additi
         rules = {
             main:   {route: '/',    method: 'main.handler', handler: dispatch('main')},
             foo:    {route: '/foo', method: 'foo.handler',  handler: dispatch('foo')},
+            foo:    {route: '/bar/:id', method: 'foo.handler',  handler: dispatch('bar')}
         };
         // set up routemap
         routemap.context(rules); // where routemap looks for the methods specified
