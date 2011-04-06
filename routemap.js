@@ -43,7 +43,6 @@
         encode = encodeURIComponent, decode = decodeURIComponent,
         token_exp = /\*|:|\?/, star_exp = /(^([^\*:\?]+):\*)|(^\*$)/, scalar_exp = /^:([^\*:\?]+)(\??)$/,
         keyval_exp = /^([^\*:\?]+):(\??)$/, trailing_slash_exp = new RegExp('([^' + SL + '])$'),
-        prefix_exp = new RegExp('^' + PR),
         context = typeof window !== 'undefined' ? window : {}, // where listeners reside, routes.context() overwrites it
         /** @ignore */
         invalid_str = function (str) {return typeof str !== 'string' || !str.length;},
@@ -227,10 +226,8 @@
          * @name RouteMap.default_handler
          * @function
          * @type undefined
-         * @param {String} url the path that was attempted will be passed into this function, any additional arguments
-         * that were passed into {@link RouteMap.handler} will also get passed into this function
          */
-        default_handler: function (url) {},
+        default_handler: function () {},
         /**
          * URL grabber function, defaults to checking the URL fragment (<code>hash</code>); this function should be
          * overwritten in a server-side environment; this method is called by {@link RouteMap.handler}; without
@@ -274,8 +271,6 @@
          * fire matched rules in parsed
          * last: current               // {@link RouteMap.last}
          * </pre></blockquote>
-         * in addition to the URL parameters, it passes any other arguments it receives to the resultant listeners,
-         * which is useful in a server-side setting for passing <code>request</code> and <code>response</code> objects
          * <code>RouteMap.handler</code> calls {@link #parse} and does not catch any errors that function throws
          * @name RouteMap.handler
          * @function
