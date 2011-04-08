@@ -143,9 +143,10 @@ Server-Side Sample
 In a server-side setting like Node.js, `RouteMap` can be imported using `require`. Because the client-side functionality
 does not distinguish between different HTTP requests (`GET`, `POST`, `HEAD`, etc.), the server-side version will likely
 need a dispatcher function if you need to distinguish between different request types. The example below shows a server
-that will answer `GET` requests to `/` and `POST` requests to `/foo` and will return a not-found message to all other
-requests (by overwriting `RouteMap.default_handler`). Note that the `RouteMap.handler` function is passed the `request`
-and `response` objects, which means they get passed into each listener as additional parameters after the `args` object.
+that will answer `GET` requests to `/` and `/bar/ + {an ID string}` and `POST` requests to `/foo`. It will return a
+not-found message to all other requests (by overwriting `RouteMap.default_handler`). Note that the `RouteMap.handler`
+function is passed the `request` and `response` objects, which means they get passed into each listener as additional
+parameters after the `args` object.
 
     var http = require('http'), routemap = require('./routemap').RouteMap, PORT = 8124;
     (function () {

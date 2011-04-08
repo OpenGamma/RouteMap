@@ -31,23 +31,19 @@
  * @static
  * @throws {Error} if JS 1.8 Array.prototype methods don't exist
  */
-(function (pub) { // resides in pub.RouteMap, defaults to exports for CommonJS or window if exports does not exist
+(function (pub, namespace) { // defaults to exports, uses window if exports does not exist
     (function (arr, url) { // plain old JS, but needs some JS 1.8 array methods
         if (!arr.every || !arr.filter || !arr.indexOf || !arr.map || !arr.reduce || !arr.some)
             throw new Error('See ' + url + ' for reference versions of Array.prototype methods available in JS 1.8');
     })([], 'https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/array/');
-    var namespace = 'RouteMap', routes, // internal reference to RouteMap
-        active_routes = {}, added_routes = {}, flat_pages = [],
-        last = 0, current = 0,
+    var routes /* internal reference to RouteMap */, active_routes = {}, added_routes = {}, flat_pages = [],
+        last = 0, current = 0, encode = encodeURIComponent, decode = decodeURIComponent,
         EQ = '=' /* equal string */, SL = '/' /* slash string */, PR = '#' /* default prefix string */,
-        encode = encodeURIComponent, decode = decodeURIComponent,
         token_exp = /\*|:|\?/, star_exp = /(^([^\*:\?]+):\*)|(^\*$)/, scalar_exp = /^:([^\*:\?]+)(\??)$/,
         keyval_exp = /^([^\*:\?]+):(\??)$/, trailing_slash_exp = new RegExp('([^' + SL + '])$'),
         context = typeof window !== 'undefined' ? window : {}, // where listeners reside, routes.context() overwrites it
         /** @ignore */
         invalid_str = function (str) {return typeof str !== 'string' || !str.length;},
-        /** @ignore */
-        has_star = function (arr) {return arr.some(function (val) {return !!val.rules.star;});},
         /** @ignore */
         fingerprint = function (rule) {return [rule.method, rule.route].join('|');},
         /**
@@ -64,7 +60,9 @@
             var self = 'parse', pages = flat_pages.filter(function (val) { // add slash to paths so all vals match
                     trailing_slash_exp.exec(path); // this populates RegExp.$1 because replace won't
                     return ~path.replace(trailing_slash_exp, RegExp.$1 + SL).indexOf(val);
-                }).filter(function (page, index) {return !index || has_star(active_routes[page]);});
+                }).filter(function (page, index) {
+                    return !index || active_routes[page].some(function (val) {return !!val.rules.star;});
+                });
             return !pages.length ? [] : pages.reduce(function (acc, page) { // flatten parsed rules for all pages
                 var current_page = active_routes[page].map(function (rule_set) {
                     var args = {}, scalars = rule_set.rules.scalars, keyvals = rule_set.rules.keyvals, method,
@@ -254,7 +252,7 @@
          * @param {String} hash the hash fragment to go to
          */
         go: function (hash) {
-            if (typeof window !== 'undefined') window.location.hash = (hash.indexOf(PR) === 0 ? '' : PR) +  hash;
+            if (typeof window !== 'undefined') window.location.hash = (hash.indexOf(PR) === 0 ? '' : PR) + hash;
         },
         /**
          * main handler function for routing, this should be bound to <code>hashchange</code> events in the browser, or
@@ -413,4 +411,4 @@
                 if (~(index = flat_pages.indexOf(compiled.page))) flat_pages.splice(index, 1); // then flat page
         }
     };
-})(typeof exports === 'undefined' ? window : exports);
+})(typeof exports === 'undefined' ? window : exports, 'RouteMap');
