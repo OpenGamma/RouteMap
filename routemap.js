@@ -33,7 +33,7 @@
  */
 (function (pub, namespace) { // defaults to exports, uses window if exports does not exist
     (function (arr, url) { // plain old JS, but needs some JS 1.8 array methods
-        if (!arr.every || !arr.filter || !arr.indexOf || !arr.map || !arr.reduce || !arr.some)
+        if (!arr.every || !arr.filter || !arr.indexOf || !arr.map || !arr.reduce || !arr.some || !arr.forEach)
             throw new Error('See ' + url + ' for reference versions of Array.prototype methods available in JS 1.8');
     })([], 'https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/array/');
     var routes /* internal reference to RouteMap */, active_routes = {}, added_routes = {}, flat_pages = [],
@@ -72,35 +72,35 @@
                             return !val.length ? acc // discard empty values, separate rest into scalars or keyvals
                                 : (value ? acc.keyvals[key] = value : acc.scalars.push(val)),  acc;
                         }, {keyvals: {}, scalars: []}), star, keyval,
-                        keyval_names = keyvals.reduce(function (acc, val) {return (acc[val.name] = 0) || acc;}, {}),
+                        keyval_keys = keyvals.reduce(function (acc, val) {return (acc[val.name] = 0) || acc;}, {}),
                         required_scalars_length = scalars.filter(function (val) {return val.required;}).length,
                         required_keyvals = keyvals.filter(function (val) {return val.required;})
-                            .every(function (val) {return val.name in request.keyvals;});
+                            .every(function (val) {return request.keyvals.hasOwnProperty(val.name);});
                     // not enough parameters are supplied in the request for this rule
                     if (required_scalars_length > request.scalars.length || !required_keyvals) return 0;
-                    if (!rule_set.rules.star){ // too many params are only a problem if the rule isn't a wildcard
+                    if (!rule_set.rules.star) { // too many params are only a problem if the rule isn't a wildcard
                         if (request.scalars.length > scalars.length) return 0; // if too many scalars are supplied
                         for (keyval in request.keyvals) // if too many keyvals are supplied
-                            if (request.keyvals.hasOwnProperty(keyval) && !(keyval in keyval_names)) return 0;
-                    };
+                            if (request.keyvals.hasOwnProperty(keyval) && !keyval_keys.hasOwnProperty(keyval)) return 0;
+                    }
                     request.scalars.slice(0, scalars.length) // populate args scalars
                         .forEach(function (scalar, index) {args[scalars[index].name] = decode(scalar);});
                     keyvals.forEach(function (keyval) { // populate args keyvals
                         if (request.keyvals[keyval.name]) args[keyval.name] = decode(request.keyvals[keyval.name]);
                         delete request.keyvals[keyval.name]; // remove so that * can be constructed
                     });
-                    if (rule_set.rules.star){ // all unused scalars and keyvals go into the * argument (still encoded)
+                    if (rule_set.rules.star) { // all unused scalars and keyvals go into the * argument (still encoded)
                         star = request.scalars.slice(scalars.length, request.scalars.length);
                         for (keyval in request.keyvals) if (request.keyvals.hasOwnProperty(keyval))
                             star.push([keyval, request.keyvals[keyval]].join(EQ));
                         args[rule_set.rules.star] = star.join(SL);
-                    };
+                    }
                     try{ // make sure the rule's method actually exists and can be accessed
                         method = rule_set.method.split('.').reduce(function (acc, val) {return acc[val];}, context);
-                        if (typeof method !== 'function') throw new Error();
-                    }catch(error){
+                        if (typeof method !== 'function') throw new Error;
+                    } catch (error) {
                         throw new TypeError(self + ': ' + rule_set.method + ' is not a function');
-                    };
+                    }
                     return {page: page, hash: routes.hash({route: rule_set.raw}, args), method: method, args: args};
                 });
                 return acc.concat(current_page).filter(Boolean); // only return the parsed rules that matched
@@ -132,10 +132,10 @@
         compile = (function () {
             var memo = {}; // compile is slow so cache compiled objects here
             return function (route) {
-                var self = 'compile', param, compiled_route, orig = route;
-                route = route[0] === SL ? route : ~route.indexOf(SL) ? route.slice(route.indexOf(SL)) : null;
+                var self = 'compile', param, compiled_route, orig = route, index;
+                route = route[0] === SL ? route : ~(index = route.indexOf(SL)) ? route.slice(index) : null;
                 if (!route) throw new SyntaxError(self + ': the route "' + orig + '" was not understood');
-                if (route in memo) return memo[route];
+                if (memo[route]) return memo[route];
                 compiled_route = route.split(SL).reduce(function (acc, val) {
                     var rules = acc.rules, scalars = rules.scalars, keyvals = rules.keyvals;
                     if (rules.star) throw new SyntaxError(self + ': no rules can follow a * directive');
@@ -143,12 +143,12 @@
                     if (!~val.search(token_exp) && !scalars.length && !keyvals.length) return acc.page.push(val), acc;
                     // construct the parameters
                     if (val.match(star_exp)) return (rules.star = RegExp.$2 || RegExp.$3), acc;
-                    if (val.match(scalar_exp)){
+                    if (val.match(scalar_exp)) {
                         if (!RegExp.$2 && acc.last_optional) // required scalars cannot follow optional scalars
                             throw new SyntaxError(self + ': "' + val + '" cannot follow an optional rule');
                         if (!!RegExp.$2) acc.last_optional = val;
                         return scalars.push({name: RegExp.$1, required: !RegExp.$2}), acc;
-                    };
+                    }
                     if (val.match(keyval_exp)) return keyvals.push({name: RegExp.$1, required: !RegExp.$2}), acc;
                     throw new SyntaxError(self + ': the rule "' + val + '" was not understood');
                 }, {page: [], rules: {scalars: [], keyvals: [], star: false}, last_optional: ''});
@@ -191,9 +191,9 @@
             var self = 'add', method = rule.method, route = rule.route, compiled, id = fingerprint(rule);
             if ([route, method].some(invalid_str))
                 throw new TypeError(self + ': rule.route and rule.method must both be non-empty strings');
-            if (id in added_routes) throw new Error(self + ': ' + route + ' to ' + method + ' already exists');
+            if (added_routes[id]) throw new Error(self + ': ' + route + ' to ' + method + ' already exists');
             compiled = compile(route);
-            added_routes[id] = 0;
+            added_routes[id] = true;
             if (!active_routes[compiled.page] && (active_routes[compiled.page] = [])) // add route to list and sort
                 flat_pages = flat_pages.concat(compiled.page).sort(function (a, b) {return b.length - a.length;});
             active_routes[compiled.page].push(routes.post_add({method: method, rules: compiled.rules, raw: route}));
@@ -338,8 +338,8 @@
          * @throws {SyntaxError} if hash cannot be parsed by {@link #parse}
          */
         parse: function (hash) {
-            var self = 'parse', parsed;
-            hash = ~hash.indexOf(SL) ? hash.slice(hash.indexOf(SL)) : '';
+            var self = 'parse', parsed, index = hash.indexOf(SL);
+            hash = ~index ? hash.slice(index) : '';
             if (invalid_str(hash)) throw new TypeError(self + ': hash must be a string with a ' + SL + ' character');
             if (!(parsed = parse(hash)).length) throw new SyntaxError(self + ': ' + hash + ' cannot be parsed');
             return {page: parsed[0].page, args: parsed[0].args};
@@ -388,7 +388,7 @@
          * @type undefined
          * @param {String} prefix (optional) the prefix string
          */
-        prefix: function (prefix) {return PR = (prefix + '' || typeof prefix === 'string' ? prefix : PR);},
+        prefix: function (prefix) {return PR = typeof prefix !== 'undefined' ? prefix + '' : PR;},
         /**
          * counterpart to {@link RouteMap.add}, removes a rule specification; * <code>remove</code> uses
          * {@link #compile} and does not catch any errors thrown by that function
@@ -402,7 +402,7 @@
             var self = 'remove', method = rule.method, route = rule.route, compiled, id = fingerprint(rule), index;
             if ([route, method].some(invalid_str))
                 throw new TypeError(self + ': rule.route and rule.method must both be non-empty strings');
-            if (!(id in added_routes)) return;
+            if (!added_routes[id]) return;
             compiled = compile(route);
             delete added_routes[id];
             active_routes[compiled.page] = active_routes[compiled.page]

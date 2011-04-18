@@ -60,7 +60,7 @@ Notice that the colon comes *after* the token name `id`. A matching URL for this
 
 ### (c) star ###
 Star directives act like a sieve. Normally, if a URL matches a pattern but has extraneous parameters, then it is not
-considered a match and `RouteMap` will not fire that patterns handler. But if a star directive exists at the end of the
+considered a match and `RouteMap` will not fire that pattern's handler. But if a star directive exists at the end of the
 rule, like in these examples:
 
     RouteMap.add({route: '/users/id:/*',        method: 'users.get'});
