@@ -47,6 +47,7 @@ follow an optional unnamed parameter, because that would lead to ambiguous URLs:
 
     RouteMap.add({route: '/users/:id/:fave?',           method: 'users.get'}); // works
     RouteMap.add({route: '/users/:id/:fave?/:other',    method: 'users.get'}); // throws an error
+    RouteMap.add({route: '/users/:id?/:fave?/:other',   method: 'users.get'}); // also throws an error
 
 ### (b) named ###
 Named tokens of rule expressions are different from unnamed tokens in that they can appear anywhere in a URL. Because
