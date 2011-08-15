@@ -201,5 +201,10 @@ parameters after the `args` object.
     }).listen(PORT, '127.0.0.1');
     console.log('HTTP listening on port ' + PORT + '\nCTRL-C to bail');
 
+Tests
+-----
+To run the tests in a browser, open: `./tests/tests-browser.html`
+
+To run the tests in node, run: `node ./tests/tests-node.js`
 
 &copy; 2011 OpenGamma Inc. and the OpenGamma group of companies
