@@ -92,7 +92,7 @@
             rule = {route: '/foo/:bar/baz:?', method: 'foo'}, params = {bar: 'abc'}, hash = '/foo/abc';
             qunit.equal(hash, routes.hash(rule, params), 'hash test for: ' + hash);
         });
-        qunit.test('#parse', function () {
+        qunit.test('#parse [1]', function () {
             var rule, hash, params, str;
             // calling parse on a hash that does not match any added routes fails
             hash = '/foo/';
@@ -181,6 +181,25 @@
             routes.add(rule);
             qunit.ok(is_equal(params, routes.parse(hash).args), str);
             routes.remove(rule);
+        });
+        qunit.test('#parse [2]', function () {
+            // reuse of the same tokens in multiple parts of a hash should not confuse parser
+            var rule_one, rule_two, hash, fired = false;
+            rule_one = {route: '/foo/:bar/:baz/*', method: 'foo'};
+            rule_two = {route: '/bar/:baz/:qux/*', method: 'bar'};
+            hash = '/bar/foo/abc';
+            routes.add(rule_one);
+            routes.add(rule_two);
+            routes.context({
+                foo: function (args) {qunit.ok(false, 'foo() should have never fired');},
+                bar: function (args) {fired = true, qunit.ok(true, 'bar() should fire');}
+            });
+            routes.get = function () {return hash;};
+            routes.handler();
+            if (!fired) qunit.ok(false, 'bar() should have fired');
+            routes.remove(rule_one);
+            routes.remove(rule_two);
+            routes.context(pub);
         });
         qunit.test('#prefix', function () {
             var old_prefix = routes.prefix(), new_prefix = 'FOO';
