@@ -87,16 +87,16 @@ In a browser environment `RouteMap` can be used as is. Here are some samples:
     // but jQuery is not necessary to use RouteMap, just shown here for event handling
     $(function () {
         var routes = window.RouteMap, rules, rule;
-        // set up window listener and initial fire
-        $(window).bind('hashchange', routes.handler);
-        $(routes.handler); // in addition to binding hash change events to window, also fire it onload
         // add some rules
         rules = {
             load_main:      {route: '/',        method: 'load'},
             load_foo_main:  {route: '/foo',     method: 'load_foo_main'},
             load_foo:       {route: '/foo/:id', method: 'load_foo'}
         };
-        for (rule in rules) if (rules.hasOwnProperty(rule)) routes.add(rule);
+        for (rule in rules) if (rules.hasOwnProperty(rule)) routes.add(rules[rule]);
+        // set up window listener and initial fire
+        $(window).bind('hashchange', routes.handler);
+        $(routes.handler); // in addition to binding hash change events to window, also fire it onload
     });
 
 The previous example assumes that `load_main`, `load_foo_main`, and `load_foo` all exist in the global (`window`)
@@ -119,9 +119,6 @@ for rules' methods. The above examples could, for example work like this:
     // however, we could be using any other library (or no library!) and we could create a hash polling function, etc.
     $(function () {
         var routes = window.RouteMap, rules, rule;
-        // set up window listener and initial fire
-        $(window).bind('hashchange', routes.handler);
-        $(routes.handler); // in addition to binding hash change events to window, also fire it onload
         // add some rules
         rules = {
             load_main:      {route: '/',        method: 'load_main'},
@@ -134,6 +131,9 @@ for rules' methods. The above examples could, for example work like this:
             load_foo:       function (args) {/* do some work (args is an object that has 'id' in it) */}
         });
         for (rule in rules) if (rules.hasOwnProperty(rule)) routes.add(rules[rule]);
+        // set up window listener and initial fire
+        $(window).bind('hashchange', routes.handler);
+        $(routes.handler); // in addition to binding hash change events to window, also fire it onload
     });
 
 The `method` attribute of each rule can drill down arbitrarily deep (e.g., `'foo.bar.baz'`) into the `context` object
