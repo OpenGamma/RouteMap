@@ -1,11 +1,6 @@
 (function (pub, namespace) {
     pub[namespace] = function (qunit, routes) {
-        var is_syntax_error = function (error) {return error instanceof SyntaxError;},
-            has = 'hasOwnProperty',
-            is_equal = function (a, b) { // not true equality, but close enough for these tests (these objects are flat)
-                for (var key in a) if (a[has](key) && a[key] !== b[key]) return false;
-                return true;
-            };
+        var is_syntax_error = function (error) {return error instanceof SyntaxError;}, has = 'hasOwnProperty';
         qunit.module('RouteMap');
         qunit.test('initialization', function () {
             qunit.ok(routes, 'RouteMap exists');
@@ -48,11 +43,13 @@
         });
         qunit.test('#context', function () {
             var methods = {foo: function () {}};
-            qunit.equal(methods, routes.context(methods), 'RouteMap context overwrite works [set]');
-            qunit.equal(methods, routes.context(), 'RouteMap context overwrite works [get]');
+            qunit.deepEqual(methods, routes.context(methods), 'RouteMap context overwrite works [set]');
+            qunit.deepEqual(methods, routes.context(), 'RouteMap context overwrite works [get]');
+            routes.context(pub);
         });
         qunit.test('#hash', function () {
             var rule, hash, params;
+            routes.context({foo: function () {}});
             // hash with one required param: unnamed
             rule = {route: '/foo/:bar', method: 'foo'}, params = {bar: 'abc'}, hash = '/foo/abc';
             qunit.equal(hash, routes.hash(rule, params), 'hash test for: ' + hash);
@@ -91,9 +88,28 @@
             // hash with multiple params: optional named
             rule = {route: '/foo/:bar/baz:?', method: 'foo'}, params = {bar: 'abc'}, hash = '/foo/abc';
             qunit.equal(hash, routes.hash(rule, params), 'hash test for: ' + hash);
+            routes.context(pub);
+        });
+        qunit.test('#merge', function () {
+            var hash = '/foo/abc/def', rule = {route: '/foo/:bar/:baz/*', method: 'foo'}, current, last;
+            routes.add(rule);
+            routes.context({foo: function (args) {
+                qunit.notDeepEqual(routes.current(), routes.last(), 'within handler, last !== current');
+            }});
+            routes.get = function () {return hash;};
+            routes.handler();
+            current = routes.current();
+            current.args.bar = 'ghi';
+            qunit.notDeepEqual(current, routes.current(), 'current is cloned so that it is not a reference');
+            last = routes.last();
+            last.args.bar = 'ghi';
+            qunit.notDeepEqual(last, routes.last(), 'last is cloned so that it is not a reference');
+            qunit.deepEqual(routes.last(), routes.current(), 'after handler has finished, last and current are same');
+            routes.remove(rule);
         });
         qunit.test('#parse [1]', function () {
             var rule, hash, params, str;
+            routes.context({foo: function () {}});
             // calling parse on a hash that does not match any added routes fails
             hash = '/foo/';
             qunit.raises(function () {routes.parse(hash);}, is_syntax_error, 'route must be added for parse to work');
@@ -102,85 +118,86 @@
             hash = '/foo/abc';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
             // hash with one required param: named
             rule = {route: '/foo/bar:', method: 'foo'}, params = {bar: 'abc'};
             hash = '/foo/bar=abc';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
             // hash with one optional param: unnamed [1]
             rule = {route: '/foo/:bar?', method: 'foo'}, params = {bar: 'abc'};
             hash = '/foo/abc';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
             // hash with one optional param: named [1]
             rule = {route: '/foo/bar:?', method: 'foo'}, params = {bar: 'abc'};
             hash = '/foo/bar=abc';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
             // hash with one optional param: unnamed [2]
             rule = {route: '/foo/:bar?', method: 'foo'}, params = {};
             hash = '/foo/';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
             // hash with multiple params: [1]
             rule = {route: '/foo/:bar/:baz', method: 'foo'}, params = {bar: 'abc', baz: 'def'};
             hash = '/foo/abc/def';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
             // hash with multiple params: [2]
             rule = {route: '/foo/bar:/:baz', method: 'foo'}, params = {bar: 'abc', baz: 'def'};
             hash = '/foo/def/bar=abc';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
             // hash with multiple params: [3]
             rule = {route: '/foo/:bar/baz:/qux:', method: 'foo'}, params = {bar: 'abc', baz: 'def', qux: 'ghi'};
             hash = '/foo/abc/baz=def/qux=ghi';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
             // hash with multiple params: [4]
             rule = {route: '/foo/:bar?/baz:/qux:?', method: 'foo'}, params = {bar: 'abc', baz: 'def', qux: 'ghi'};
             hash = '/foo/abc/baz=def/qux=ghi';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
             // hash with *: [1]
             rule = {route: '/foo/*', method: 'foo'}, params = {'*': 'abc/def/ghi'};
             hash = '/foo/abc/def/ghi';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
             // hash with *: [2]
             rule = {route: '/foo/bar:*', method: 'foo'}, params = {bar: 'abc/def/ghi'};
             hash = '/foo/abc/def/ghi';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
             // hash with *: [3]
             rule = {route: '/foo/:bar/baz:*', method: 'foo'}, params = {bar: 'abc', baz: 'def/ghi'};
             hash = '/foo/abc/def/ghi';
             str = 'parse for hash: ' + hash + '  rule: ' + JSON.stringify(rule) + ' returns: ' + JSON.stringify(params);
             routes.add(rule);
-            qunit.ok(is_equal(params, routes.parse(hash).args), str);
+            qunit.deepEqual(params, routes.parse(hash).args, str);
             routes.remove(rule);
+            routes.context(pub);
         });
         qunit.test('#parse [2]', function () {
             // reuse of the same tokens in multiple parts of a hash should not confuse parser
